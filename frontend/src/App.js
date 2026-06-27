@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useTasks } from "./hooks/useTasks";
 import TaskCard from "./components/TaskCard";
 import TaskForm from "./components/TaskForm";
@@ -28,11 +28,21 @@ export default function App() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { addToast } = useToast();
-  const { tasks, stats, loading, error, createTask, updateTask, updateStatus, deleteTask } = useTasks(apiFilters);
 
-  // Debounce search to avoid too many API calls
-  const debouncedSetApiFilters = useCallback(
-    debounce((f) => setApiFilters(f), 350),
+  const {
+    tasks,
+    stats,
+    loading,
+    error,
+    createTask,
+    updateTask,
+    updateStatus,
+    deleteTask,
+  } = useTasks(apiFilters);
+
+  // Corrected: useMemo instead of useCallback
+  const debouncedSetApiFilters = useMemo(
+    () => debounce((f) => setApiFilters(f), 350),
     []
   );
 
@@ -58,12 +68,14 @@ export default function App() {
 
   const handleSubmit = async (data) => {
     setFormLoading(true);
+
     try {
       if (editingTask) {
         await updateTask(editingTask._id, data);
       } else {
         await createTask(data);
       }
+
       closeModal();
     } catch (err) {
       addToast(err.message, "error");
@@ -74,7 +86,9 @@ export default function App() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
+
     setDeleteLoading(true);
+
     try {
       await deleteTask(deleteTarget);
       setDeleteTarget(null);
@@ -86,14 +100,30 @@ export default function App() {
   };
 
   const groupedTasks = useMemo(() => {
-    if (apiFilters.status !== "all") return null; // don't group if filtered
-    const groups = { todo: [], "in-progress": [], completed: [] };
-    tasks.forEach((t) => { if (groups[t.status]) groups[t.status].push(t); });
+    if (apiFilters.status !== "all") return null;
+
+    const groups = {
+      todo: [],
+      "in-progress": [],
+      completed: [],
+    };
+
+    tasks.forEach((task) => {
+      if (groups[task.status]) {
+        groups[task.status].push(task);
+      }
+    });
+
     return groups;
   }, [tasks, apiFilters.status]);
 
   const activeFiltersCount = Object.entries(apiFilters).filter(
-    ([k, v]) => k !== "sort" && k !== "order" && v && v !== "all" && v !== ""
+    ([key, value]) =>
+      key !== "sort" &&
+      key !== "order" &&
+      value &&
+      value !== "all" &&
+      value !== ""
   ).length;
 
   return (
@@ -102,11 +132,13 @@ export default function App() {
         <div className="header-inner">
           <div className="brand">
             <div className="brand-icon">✓</div>
+
             <div>
               <h1>Taskflow</h1>
               <span className="brand-sub">Your work, organized</span>
             </div>
           </div>
+
           <button className="btn btn-primary btn-add" onClick={openCreate}>
             <span>+</span> New task
           </button>
@@ -123,15 +155,23 @@ export default function App() {
         />
 
         {activeFiltersCount > 0 && (
-          <button className="clear-filters" onClick={() => handleFilterChange(DEFAULT_FILTERS)}>
-            Clear {activeFiltersCount} filter{activeFiltersCount > 1 ? "s" : ""}
+          <button
+            className="clear-filters"
+            onClick={() => handleFilterChange(DEFAULT_FILTERS)}
+          >
+            Clear {activeFiltersCount} filter
+            {activeFiltersCount > 1 ? "s" : ""}
           </button>
         )}
 
         {error && (
           <div className="error-banner">
             <strong>Connection error:</strong> {error}
-            <p>Make sure your backend is running at <code>{process.env.REACT_APP_API_URL || "/api"}</code></p>
+
+            <p>
+              Make sure your backend is running at{" "}
+              <code>{process.env.REACT_APP_API_URL || "/api"}</code>
+            </p>
           </div>
         )}
 
@@ -144,10 +184,23 @@ export default function App() {
         ) : tasks.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📋</div>
-            <h3>{activeFiltersCount > 0 ? "No tasks match your filters" : "No tasks yet"}</h3>
-            <p>{activeFiltersCount > 0 ? "Try adjusting the filters above" : "Create your first task to get started"}</p>
+
+            <h3>
+              {activeFiltersCount > 0
+                ? "No tasks match your filters"
+                : "No tasks yet"}
+            </h3>
+
+            <p>
+              {activeFiltersCount > 0
+                ? "Try adjusting the filters above"
+                : "Create your first task to get started"}
+            </p>
+
             {activeFiltersCount === 0 && (
-              <button className="btn btn-primary" onClick={openCreate}>Create a task</button>
+              <button className="btn btn-primary" onClick={openCreate}>
+                Create a task
+              </button>
             )}
           </div>
         ) : groupedTasks ? (
@@ -160,9 +213,14 @@ export default function App() {
               <div key={key} className={`kanban-col kanban-${key}`}>
                 <div className="kanban-col-header">
                   <span className="kanban-icon">{icon}</span>
+
                   <span className="kanban-label">{label}</span>
-                  <span className="kanban-count">{groupedTasks[key].length}</span>
+
+                  <span className="kanban-count">
+                    {groupedTasks[key].length}
+                  </span>
                 </div>
+
                 <div className="kanban-cards">
                   {groupedTasks[key].length === 0 ? (
                     <div className="kanban-empty">Nothing here yet</div>
