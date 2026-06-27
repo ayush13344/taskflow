@@ -1,0 +1,15 @@
+# render.yaml — Deploy backend to Render.com (free tier)
+services:
+  - type: web
+    name: task-tracker-api
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false          # Set in Render dashboard
+      - key: FRONTEND_URL
+        sync: false          # Your Vercel URL, set after frontend deploy
