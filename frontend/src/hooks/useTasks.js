@@ -37,7 +37,7 @@ export const useTasks = (filters) => {
   useEffect(() => {
     fetchTasks();
     fetchStats();
-  }, [fetchTasks]);
+  }, [fetchTasks, fetchStats]);
 
   const createTask = useCallback(async (data) => {
     const res = await taskApi.create(data);
